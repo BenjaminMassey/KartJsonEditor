@@ -103,6 +103,11 @@ impl eframe::App for CompeteApp {
                 self.player_edit = vec![String::new(), String::new(), String::new(), String::new()];
                 self.score_edit = vec![String::new(), String::new(), String::new(), String::new()];
             }
+            cui.separator();
+            cui.label("For One on One matches, use '1' for the winner and '0' for the loser.");
+            cui.separator();
+            cui.label("For Free for All matches, use their in-game score if possible: out of 60 points.");
+            cui.label("Otherwise use the values of 15, 30, 45, and 60: based on placement.");
         });
     }
 }
