@@ -1,8 +1,22 @@
 use eframe::egui;
+use serde::{Deserialize, Serialize};
+use std::fs;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Match {
+    game_type: String,
+    players: Vec<String>,
+    scores: Vec<f32>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Content {
+    matches: Vec<Match>,
+}
 
 fn main() {
     let native_options = eframe::NativeOptions::default();
-    let x = eframe::run_native(
+    let _ = eframe::run_native(
         "Kart JSON Editor",
         native_options,
         Box::new(|cc| Box::new(CompeteApp::new(cc)))
@@ -24,13 +38,6 @@ impl CompeteApp {
     }
 }
 
-#[derive(Debug)]
-struct Match {
-    game_type: String,
-    players: Vec<String>,
-    scores: Vec<f32>,
-}
-
 fn get_match(player_entries: Vec<String>, score_entries: Vec<String>) -> Match {
     let game_type: String = match player_entries.len() {
         2 => "one_on_one".to_owned(),
@@ -49,9 +56,17 @@ fn get_match(player_entries: Vec<String>, score_entries: Vec<String>) -> Match {
     }
 }
 
+fn write_match(file_path: &str, mat: Match) {
+    let data = fs::read_to_string(file_path).expect("Unable to read file");
+    let mut content: Content = serde_json::from_str(&data).expect("Unable to parse JSON");
+    content.matches.push(mat);
+    let result = serde_json::to_string_pretty(&content).unwrap();
+    let _ = fs::write(file_path, result);
+}
+
 fn process_match(player_entries: Vec<String>, score_entries: Vec<String>) {
-    let m = get_match(player_entries, score_entries);
-    println!("{:?}", m);
+    let mat = get_match(player_entries, score_entries);
+    write_match("./content.json", mat);
 }
 
 impl eframe::App for CompeteApp {
