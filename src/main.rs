@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui::Vec2;
 use serde::{Deserialize, Serialize};
 use std::fs;
 
@@ -15,7 +16,10 @@ struct Content {
 }
 
 fn main() {
-    let native_options = eframe::NativeOptions::default();
+    let mut native_options = eframe::NativeOptions::default();
+    native_options.initial_window_size = Option::from(
+        Vec2::new(765f32, 350f32)
+    );
     let _ = eframe::run_native(
         "Kart JSON Editor",
         native_options,
