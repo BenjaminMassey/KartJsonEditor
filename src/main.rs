@@ -2,20 +2,8 @@
 
 use eframe::egui;
 use egui::Vec2;
-use serde::{Deserialize, Serialize};
 use std::fs;
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Match {
-    game_type: String,
-    players: Vec<String>,
-    scores: Vec<f32>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Content {
-    matches: Vec<Match>,
-}
+use std::collections::HashMap;
 
 fn main() {
     let mut native_options = eframe::NativeOptions::default();
@@ -44,28 +32,20 @@ impl CompeteApp {
     }
 }
 
-fn get_match(player_entries: Vec<String>, score_entries: Vec<String>) -> Match {
-    let game_type: String = match player_entries.len() {
-        2 => "one_on_one".to_owned(),
-        3 => "free_for_all".to_owned(),
-        4 => "free_for_all".to_owned(),
-        i => panic!("Unknown number of players {}", i),
-    };
-    let mut scores: Vec<f32> = Vec::new();
-    for score_entry in &score_entries {
-        scores.push(score_entry.parse::<f32>().unwrap());
+fn get_match(player_entries: Vec<String>, score_entries: Vec<String>) -> HashMap<String, f32> {
+    let mut result: HashMap<String, f32> = Default::default();
+    assert!(player_entries.len() == score_entries.len(), "Mismatch parallel arrays for get_match(..)");
+    for i in 0..player_entries.len() {
+        result.insert(player_entries[i].clone(), 0f32);
+        *result.get_mut(&player_entries[i]).unwrap() = score_entries[i].parse::<f32>().unwrap();
     }
-    Match {
-        game_type,
-        players: player_entries,
-        scores,
-    }
+    return result;
 }
 
-fn write_match(file_path: &str, mat: Match) {
+fn write_match(file_path: &str, mat: HashMap<String, f32>) {
     let data = fs::read_to_string(file_path).expect("Unable to read file");
-    let mut content: Content = serde_json::from_str(&data).expect("Unable to parse JSON");
-    content.matches.push(mat);
+    let mut content: Vec<HashMap<String, f32>> = serde_json::from_str(&data).expect("Unable to parse JSON");
+    content.push(mat);
     let result = serde_json::to_string_pretty(&content).unwrap();
     let _ = fs::write(file_path, result);
 }
@@ -76,7 +56,7 @@ fn process_match(player_entries: Vec<String>, score_entries: Vec<String>) {
 }
 
 impl eframe::App for CompeteApp {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |cui| {
             cui.heading("Kart JSON Editor");
             cui.separator();
@@ -101,7 +81,7 @@ impl eframe::App for CompeteApp {
                         break;
                     }
                 }
-                for i in rem_index..4 {
+                for _i in rem_index..4 {
                     self.player_edit.remove(rem_index);
                     self.score_edit.remove(rem_index);
                 }
